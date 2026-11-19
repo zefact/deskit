@@ -1,0 +1,38 @@
+# ---- 依存関係 ----
+node_modules
+
+# ---- ビルド成果物 ----
+dist
+dist-ssr
+
+# ---- ログ ----
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ---- OS / エディタ ----
+.DS_Store
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.local
+.vscode/*
+!.vscode/extensions.json
+
+# ---- 秘密の情報 (誤ってコミットしないように) ----
+# アプリ内アップデートの署名鍵・証明書・環境変数のファイル
+*.key
+*.p12
+*.pem
+.env
+.env.*
+
+# ---- 削除予定の退避フォルダ ----
+_to_delete/

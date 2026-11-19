@@ -1,0 +1,1669 @@
+/* ============================================================
+   アカウント系のツール (Gitアカウント・AWSプロファイル) と、入力フォームのダイアログ
+   ============================================================ */
+
+/* ============ ダイアログの入力フォーム ============ */
+
+.dialog-wide {
+  width: min(680px, calc(100vw - 48px));
+}
+
+.dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+  user-select: text;
+}
+
+.dialog-body p {
+  margin: 0;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+
+.dialog-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.dialog-foot-note {
+  flex: 1;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.field .input,
+.field .select {
+  width: 100%;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.field-hint {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+.field-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.field-row .input,
+.field-row .select {
+  flex: 1;
+  min-width: 0;
+}
+
+.field-test {
+  min-height: 18px;
+  font-size: 12px;
+}
+
+.snippet {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}
+
+/* ============ 共通 ============ */
+
+.count-inline {
+  margin-left: 6px;
+  font-size: 11px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--hover);
+  color: var(--text-faint);
+}
+
+.test-ok,
+.test-ng,
+.test-busy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.test-ok {
+  color: var(--success);
+}
+
+.test-ng {
+  color: var(--danger);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.test-ng svg,
+.test-ok svg {
+  flex-shrink: 0;
+}
+
+.test-busy {
+  color: var(--text-dim);
+}
+
+/* 失敗の理由は省略せず、折り返して全部見せる */
+.test-ng.is-full {
+  align-items: flex-start;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+.test-ng.is-full svg {
+  margin-top: 3px;
+}
+
+.test-fail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* ---- ホストの鍵の登録 ---- */
+
+.hostkey-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  color: var(--text-dim);
+}
+
+.hostkey-target {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.hostkey-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.hostkey-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+}
+
+.hostkey-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 12px;
+}
+
+.hostkey-row + .hostkey-row {
+  border-top: 1px solid var(--border);
+}
+
+.hostkey-type {
+  width: 64px;
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.hostkey-print {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.hostkey-ok {
+  flex-shrink: 0;
+  color: var(--success);
+}
+
+/* ============ Git アカウント ============ */
+
+/* ---- 区切り (見出し + ひとこと説明) ---- */
+
+.git-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.git-sec-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  margin-top: 6px;
+}
+
+.git-sec-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: rgb(var(--hue));
+  background: rgb(var(--hue) / 0.12);
+}
+
+.git-sec-text {
+  /* 狭いときは、ボタンを説明の下へ回す */
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.git-sec-text h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.git-sec-text p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.git-sec-text .count {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--hover);
+  color: var(--text-faint);
+}
+
+.git-sec-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.git-sec-actions [data-tip]:hover::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.git-sec-meta {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+/* ---- しくみの説明 ---- */
+
+.git-help {
+  flex-shrink: 0;
+  border-radius: 14px;
+  border: 1px solid rgb(var(--hue) / 0.3);
+  background:
+    radial-gradient(90% 140% at 0% 0%, rgb(var(--hue) / 0.1), transparent 60%),
+    var(--bg-elev);
+}
+
+.git-help-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px 12px 16px;
+  border: none;
+  border-radius: 14px;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.git-help-head > svg {
+  flex-shrink: 0;
+  color: rgb(var(--hue));
+}
+
+.git-help-title {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.git-help-lead {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.git-help-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.git-help-toggle svg {
+  transition: transform 0.15s;
+}
+
+.git-help.is-open .git-help-toggle svg {
+  transform: rotate(180deg);
+}
+
+.git-help-head:hover .git-help-toggle {
+  color: var(--text);
+}
+
+.git-help-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 18px 18px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+
+.git-help-body p {
+  margin: 0;
+}
+
+.git-help-body h3 {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.git-help-body code {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--hover);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.git-help-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.git-help-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--bg-elev-2);
+}
+
+.git-help-box-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.git-help-box-head svg {
+  color: rgb(var(--hue));
+}
+
+.git-help-box-head svg + code {
+  margin-left: 4px;
+}
+
+.git-help-ng {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--warn);
+}
+
+.git-help-ng svg {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* どのファイルに書かれるか (作者の列と鍵の列) */
+.git-map {
+  --map-gap: 12px;
+  --file-pad: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px var(--map-gap);
+}
+
+.git-map-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.git-map-head svg {
+  color: rgb(var(--hue));
+}
+
+.git-map-wide {
+  grid-column: 1 / -1;
+}
+
+.git-file {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px var(--file-pad);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--bg-elev-2);
+}
+
+.git-file-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.git-file-head svg {
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+
+.git-file-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.git-file-origin {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/* 1つのファイルの中の2か所を、下の2列にそろえて並べる */
+.git-file-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: calc(var(--map-gap) + var(--file-pad) * 2 + 2px);
+}
+
+.git-help-body .git-file-code {
+  margin: 0;
+  padding: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.git-file-code mark {
+  padding: 0 3px;
+  border-radius: 4px;
+  background: rgb(var(--hue) / 0.2);
+  color: rgb(var(--hue));
+  font-weight: 700;
+}
+
+.git-file-writer {
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.git-map-link,
+.git-map-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding-left: var(--file-pad);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.git-map-link svg,
+.git-map-result svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.git-map-result {
+  color: var(--text);
+}
+
+.git-help-note {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+@media (max-width: 1100px) {
+  .git-help-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- アカウントのカード ---- */
+
+.acct-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 12px;
+}
+
+.acct-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 14px 12px 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.acct-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.acct-avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, rgb(var(--hue)), rgb(var(--hue) / 0.55));
+}
+
+.acct-label {
+  min-width: 0;
+  font-size: 14.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acct-tools {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.acct-tools [data-tip]:hover::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.acct-rows {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+}
+
+.acct-row {
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+}
+
+.acct-row + .acct-row {
+  border-top: 1px solid var(--border);
+}
+
+.acct-row-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.acct-row-label svg {
+  flex-shrink: 0;
+  color: rgb(var(--hue));
+}
+
+.acct-row-value {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 別名・接続先・鍵は省略せず、折り返して全部見せる */
+.acct-row-value.is-wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.acct-test {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 30px;
+}
+
+.acct-test > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.acct-test > .btn {
+  align-self: flex-start;
+}
+
+/* HTTPS のアカウントの、認証についてのひとこと */
+.acct-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-faint);
+}
+
+.acct-note.is-warn {
+  color: var(--warn);
+}
+
+.acct-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px;
+  border-radius: var(--r-lg);
+  border: 1.5px dashed var(--border-strong);
+  background: var(--bg-elev);
+}
+
+.acct-empty p {
+  margin: 0;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+
+/* 登録したあとも出しておく、残りの別名の候補 */
+.acct-suggest {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: var(--r-lg);
+  border: 1px dashed var(--border-strong);
+}
+
+/* ---- リポジトリごと ---- */
+
+.repo-card {
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.repo-drop {
+  width: calc(100% - 24px);
+  margin: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 16px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 10px;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.repo-drop:hover {
+  border-color: rgb(var(--hue) / 0.6);
+  background: rgb(var(--hue) / 0.04);
+}
+
+.repo-drop svg {
+  color: rgb(var(--hue));
+}
+
+.repo-drop-main {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.repo-drop-sub {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.repo-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px;
+  color: var(--text-dim);
+}
+
+.repo-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 8px 8px 8px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.repo-head > svg {
+  flex-shrink: 0;
+  color: rgb(var(--hue));
+}
+
+.repo-name {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.repo-path {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.repo-head [data-tip]:hover::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.repo-now {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px 14px;
+}
+
+.repo-now-title,
+.repo-apply-sub {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+
+.repo-apply-file {
+  margin-left: 10px;
+  font-weight: 500;
+}
+
+.repo-apply-file .mono {
+  color: var(--text-dim);
+}
+
+/* 設定したあと、どの鍵で接続するか */
+.repo-key-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.repo-key-note svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: rgb(var(--hue));
+}
+
+.repo-key-note b {
+  color: var(--text);
+}
+
+.repo-grid {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 10px 12px;
+  align-items: start;
+}
+
+.repo-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 1px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.repo-label svg {
+  color: rgb(var(--hue));
+}
+
+.repo-value {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12.5px;
+}
+
+.repo-remotes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.repo-remote {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.remote-name {
+  min-width: 70px;
+  font-weight: 700;
+  color: var(--syn-property);
+}
+
+.remote-url {
+  min-width: 0;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge[data-tip] {
+  position: relative;
+  cursor: help;
+}
+
+.repo-verdict {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  font-size: 12.5px;
+}
+
+.repo-verdict svg {
+  flex-shrink: 0;
+}
+
+.repo-verdict.is-ok {
+  color: var(--success);
+  border-color: rgba(52, 211, 153, 0.35);
+  background: var(--success-soft);
+}
+
+.repo-verdict.is-warn {
+  color: var(--warn);
+  border-color: rgba(251, 191, 36, 0.35);
+  background: var(--warn-soft);
+}
+
+.repo-verdict.is-info {
+  color: var(--text-dim);
+  background: var(--bg-elev-2);
+}
+
+.repo-apply {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-elev-2);
+}
+
+.repo-apply-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.repo-apply-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.repo-apply-head .select {
+  min-width: 280px;
+}
+
+.change-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.change-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 12.5px;
+}
+
+.change-list svg {
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+
+.change-check {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+.change-list li.is-skipped .change-to {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.change-list li.is-skipped .change-from {
+  text-decoration: none;
+  color: var(--text-dim);
+}
+
+.change-from.is-unset {
+  text-decoration: none;
+}
+
+.change-key {
+  flex-shrink: 0;
+  min-width: 112px;
+  font-weight: 700;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.change-from {
+  min-width: 0;
+  color: var(--text-faint);
+  text-decoration: line-through;
+  text-decoration-color: rgba(var(--ink), 0.25);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.change-to {
+  min-width: 0;
+  color: var(--success);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.repo-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.repo-recent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.repo-recent-label {
+  margin-right: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+
+.repo-recent .recent-chip {
+  height: 28px;
+  font-size: 12px;
+}
+
+.recent-chip.is-on {
+  color: var(--text);
+  border-color: rgb(var(--hue) / 0.5);
+}
+
+/* ---- パソコン全体の既定 ---- */
+
+.global-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.global-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ---- 追加・編集のダイアログ ---- */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 10px 14px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.form-group legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.form-group legend svg {
+  color: var(--accent-text);
+}
+
+.dialog-body .form-group-desc {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-faint);
+}
+
+.form-group code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+/* ほかのアカウントと作者が同じとき */
+.dialog-body .form-twin {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--warn);
+}
+
+.form-twin svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.form-preview {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+.form-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: var(--warn-soft);
+}
+
+.dialog-body .form-tip p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--warn);
+}
+
+.form-tip-snippet {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.form-tip-snippet .snippet {
+  flex: 1;
+}
+
+/* ============ AWS プロファイル ============ */
+
+.aws-selected {
+  font-family: var(--font-mono);
+}
+
+.aws-integ {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.aws-cli {
+  margin-left: 10px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.aws-card {
+  flex-shrink: 0;
+}
+
+.aws-card .card-head {
+  height: 48px;
+}
+
+.aws-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.aws-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.1fr) minmax(120px, 0.8fr) minmax(150px, 0.9fr) minmax(200px, 1.4fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 8px 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+  transition: background 0.12s;
+}
+
+.aws-row:last-child {
+  border-bottom: none;
+}
+
+.aws-row:not(.aws-row-head):hover {
+  background: rgba(var(--ink), 0.025);
+}
+
+.aws-row.is-selected {
+  background: rgb(var(--hue) / 0.06);
+}
+
+.aws-row.is-pickable {
+  cursor: pointer;
+}
+
+.aws-row.is-pickable:hover .radio {
+  border-color: rgb(var(--hue));
+}
+
+.aws-row-head {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+
+.aws-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.aws-name-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+.aws-sub {
+  font-size: 11px;
+  margin-top: 1px;
+}
+
+.radio {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--bg-input);
+  padding: 0;
+  transition: border-color 0.12s;
+}
+
+.radio:hover {
+  border-color: rgb(var(--hue));
+}
+
+.radio.is-on {
+  border-color: rgb(var(--hue));
+  cursor: default;
+}
+
+.radio.is-on::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: rgb(var(--hue));
+}
+
+.aws-id {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.aws-id-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  min-width: 0;
+}
+
+/* 「アカウントID」「IAMユーザー」などの小さな見出し */
+.aws-id-label {
+  position: relative;
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+
+.aws-id-label[data-tip] {
+  cursor: help;
+}
+
+.aws-acct-name {
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* 名前を読めなかったとき (理由はマウスを乗せると出る) */
+.aws-name-miss {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  cursor: help;
+}
+
+.aws-alias {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgb(var(--hue));
+  background: rgb(var(--hue) / 0.12);
+}
+
+.aws-arn {
+  flex-wrap: nowrap;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.aws-arn > .mono:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aws-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.aws-actions [data-tip]:hover::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.aws-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: 11.5px;
+  padding: 0 4px;
+}
+
+@media (max-width: 1150px) {
+  .aws-row {
+    grid-template-columns: minmax(150px, 1fr) minmax(110px, 0.8fr) minmax(190px, 1.3fr) auto;
+  }
+  .aws-row > :nth-child(3) {
+    display: none;
+  }
+}
+
+/* ---- パソコン全体の既定: 変わるもの・変わらないもの ---- */
+
+.global-effects {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-elev);
+}
+
+.global-effect {
+  padding: 12px 16px;
+  min-width: 0;
+}
+
+.global-effect + .global-effect {
+  border-left: 1px solid var(--border);
+}
+
+.global-effect h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.global-effect.is-yes h4 {
+  color: var(--success);
+}
+
+.global-effect.is-no h4 {
+  color: var(--text-faint);
+}
+
+.global-effect ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+
+.global-effect b {
+  color: var(--text);
+}
+
+.global-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--warn);
+}
+
+.global-tip svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+@media (max-width: 1000px) {
+  .global-effects {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .global-effect + .global-effect {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* ---- SSH接続 (~/.ssh/config の接続先) ---- */
+
+.ssh-card .card-head {
+  height: 48px;
+}
+
+.ssh-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.ssh-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(170px, 1.1fr) minmax(150px, 1fr) minmax(130px, 0.9fr) 64px;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 8px 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+}
+
+.ssh-row:last-child {
+  border-bottom: none;
+}
+
+.ssh-row:not(.ssh-row-head):hover {
+  background: rgba(var(--ink), 0.025);
+}
+
+.ssh-row-head {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+
+.ssh-row > * {
+  min-width: 0;
+}
+
+.ssh-name-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.ssh-sub {
+  font-size: 11px;
+}
+
+.ssh-target {
+  overflow-wrap: anywhere;
+}
+
+.ssh-key .mono {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+
+.ssh-key svg {
+  flex-shrink: 0;
+  color: rgb(var(--hue));
+}
+
+.ssh-users {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ssh-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.ssh-actions [data-tip]:hover::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.ssh-git-link {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 12px;
+}
+
+@media (max-width: 1000px) {
+  .ssh-row {
+    grid-template-columns: minmax(140px, 1fr) minmax(150px, 1.1fr) minmax(130px, 1fr) 64px;
+  }
+  .ssh-row > :nth-child(4) {
+    display: none;
+  }
+}
+
+/* 文中で、ほかのツールを開くリンク */
+.text-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: rgb(var(--hue));
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+}
+
+/* 編集のときの別名 (変えられない) */
+.alias-fixed {
+  display: flex;
+  align-items: center;
+  color: var(--text-dim);
+  background: var(--hover);
+}
+
+.alias-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.alias-preview .snippet {
+  margin: 0;
+}
+
+/* 注意ではなく案内のときの囲み */
+.form-tip.is-info {
+  border-color: var(--border);
+  background: var(--bg-elev-2);
+}
+
+.dialog-body .form-tip.is-info p {
+  color: var(--text-dim);
+}
+
+.alias-only {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 鍵ファイルのパス (入力欄と「ファイルを選ぶ」を横に並べる) */
+.key-path {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.key-path-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.key-path-row .input {
+  flex: 1;
+  min-width: 0;
+}
+.key-path-row .btn {
+  flex-shrink: 0;
+}

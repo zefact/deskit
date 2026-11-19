@@ -1,0 +1,122 @@
+# タグ (v*) を push すると Mac / Windows 向けにビルドし、
+# GitHub Releases へドラフトとして添付するワークフロー。
+# リリースノートは CHANGELOG.md の該当バージョンのセクションから自動生成される。
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+# Releasesへの書き込みに必要
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Apple Silicon Mac (.app / .dmg)
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+          # Windows x64 (.msi / セットアップ.exe)
+          - platform: windows-latest
+            args: ""
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # CHANGELOG.md からタグに対応するバージョンのセクションを抜き出す
+      # (例: v1.0.0 → 「## [1.0.0]」から次の「## [」まで)
+      - name: 変更履歴を抽出
+        id: changelog
+        shell: bash
+        run: |
+          ver="${GITHUB_REF_NAME#v}"
+          body=$(awk -v ver="$ver" '
+            $0 ~ "^## \\[" ver "\\]" { flag = 1; next }
+            /^## \[/ { flag = 0 }
+            flag' CHANGELOG.md)
+          if [ -z "$(echo "$body" | tr -d '[:space:]')" ]; then
+            body="変更点は [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md) を参照してください。"
+          fi
+          {
+            echo "body<<CHANGELOG_EOF"
+            echo "$body"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Node.jsセットアップ
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Rustセットアップ
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
+
+      - name: Rustビルドキャッシュ
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: フロントエンド依存関係
+        run: npm ci
+
+      - name: テスト
+        run: npm test
+
+      # macOS の署名・公証 (Developer ID / Notarization) の Secrets を、登録してあるものだけ渡す。
+      # 未登録の Secrets は空の文字列になり、そのまま渡すと Tauri が空の証明書を読み込もうとして
+      # ビルドが止まるため、空のものは渡さない (APPLE_CERTIFICATE が無ければ署名なしでビルドする)
+      - name: macOSの署名の準備
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -z "$APPLE_CERTIFICATE" ]; then
+            echo "::notice::APPLE_CERTIFICATE が未登録のため、macOS 版は署名なしでビルドします"
+            exit 0
+          fi
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            value="${!name}"
+            if [ -n "$value" ]; then
+              # 改行を含む値でも崩れないよう、区切りの書き方で渡す
+              {
+                echo "$name<<APPLE_SECRET_EOF"
+                echo "$value"
+                echo "APPLE_SECRET_EOF"
+              } >> "$GITHUB_ENV"
+            fi
+          done
+          echo "::notice::macOS 版に署名します"
+
+      - name: ビルドしてReleasesへ添付
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # アプリ内アップデートの署名鍵 (リポジトリのSecretsに登録。未登録だとビルドが止まる)
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # macOS の署名の Secrets は、上の「macOSの署名の準備」で登録してあるものだけ渡している
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Deskit ${{ github.ref_name }}"
+          releaseBody: ${{ steps.changelog.outputs.body }}
+          releaseDraft: true # 内容を確認してから手動で公開する
+          # アプリ内アップデートは「最新の正式リリース」(releases/latest) を参照するため、
+          # prereleaseを付けるとlatest.jsonが見つからず更新が配信されない
+          prerelease: false
+          includeUpdaterJson: true # latest.json (アプリ内アップデート用) を作って添付する
+          args: ${{ matrix.args }}

@@ -1,0 +1,47 @@
+[package]
+name = "deskit"
+version = "1.0.0"
+description = "Deskit - 開発に使う小さな道具をひとまとめにしたデスクトップツール集"
+authors = ["ZEFACT Co., Ltd."]
+license = "MIT"
+homepage = "https://zefact.github.io/deskit/"
+repository = "https://github.com/zefact/deskit"
+edition = "2021"
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "deskit_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+# クリップボードの読み書き。
+# WKWebViewは操作の直後でないと navigator.clipboard を受け付けないため、Rust側から行う
+tauri-plugin-clipboard-manager = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+md-5 = "0.11.0"
+sha1 = "0.11.0"
+sha2 = "0.11.1"
+# SSH のホスト鍵の指紋 (SHA256:…) を求めるため
+base64 = "0.23"
+# git / ssh / aws コマンドを、待ち時間の上限つきで実行するため (Tauri が使っているものと同じ tokio)
+tokio = { version = "1.54.1", features = ["process", "time", "macros"] }
+# ~/.gitconfig・~/.ssh/config・~/.aws の場所 (ホームフォルダ) を求める
+dirs = "7"
+# 設定ファイルのバックアップ名に日時を入れる
+chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
+# アプリ内アップデート (GitHub Releases の latest.json を見て、署名を確かめてから入れ替える) と、入れ替えたあとの再起動
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+
+[dev-dependencies]
+tempfile = "3.27.0"
+tokio = { version = "1.54.1", features = ["macros", "rt"] }

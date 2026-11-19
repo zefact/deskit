@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deskit - 開発に使う小さな道具をひとまとめにしたデスクトップアプリ</title>
+  <meta name="description" content="Deskit は、JSON整形・JSON⇔YAML・Base64・JWT・ハッシュ・UUID・パスワード生成・正規表現・テキスト比較・和暦と年齢の計算、Git / SSH / AWS のアカウント切り替えなど、開発に使う22の道具をまとめた macOS / Windows 向けの無料デスクトップアプリです。入力はすべて手元で処理します。" />
+  <meta property="og:title" content="Deskit - 開発に使う小さな道具をひとまとめにしたデスクトップアプリ" />
+  <meta property="og:description" content="ツールサイトを探して、社内のJSONやトークンを貼る必要はもうありません。⌘K ですぐ呼び出せる22の道具を、手元のアプリにまとめました (macOS / Windows)。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://zefact.github.io/deskit/" />
+  <link rel="icon" type="image/svg+xml" href="./deskit.svg" />
+  <style>
+    :root {
+      --ink: #0f1222;
+      --ink-2: #3d4257;
+      --ink-3: #7a7f96;
+      --line: #e8e9ef;
+      --bg: #ffffff;
+      --bg-soft: #f7f7fa;
+      --accent: #5b4cf0;
+      --accent-grad: linear-gradient(100deg, #6d5cff 0%, #4f7cf7 55%, #12a8e0 100%);
+      /* app mock palette (実アプリと同じ) */
+      --m-bg: #0c0e13;
+      --m-side: #101218;
+      --m-elev: #151820;
+      --m-input: #0f1116;
+      --m-border: rgba(255, 255, 255, 0.07);
+      --m-border-s: rgba(255, 255, 255, 0.13);
+      --m-text: #e7e9f0;
+      --m-dim: #969db0;
+      --m-faint: #5e6578;
+      --m-accent: #7c6cff;
+      --m-accent-t: #aca2ff;
+      --m-success: #34d399;
+      --m-warn: #fbbf24;
+      /* カテゴリの色 (実アプリと同じ) */
+      --h-account: 251 146 60;
+      --h-convert: 96 165 250;
+      --h-encode: 167 139 250;
+      --h-format: 251 191 36;
+      --h-generate: 52 211 153;
+      --h-text: 244 114 182;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+    .mono { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+
+    /* ===== Nav ===== */
+    nav {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-inner { display: flex; align-items: center; height: 64px; gap: 28px; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; }
+    .nav-logo svg { width: 26px; height: 26px; }
+    .nav-links { display: flex; gap: 24px; margin-left: auto; font-size: 14px; color: var(--ink-2); }
+    .nav-links a:hover { color: var(--ink); }
+    .nav-gh {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 13.5px; font-weight: 600;
+      border: 1px solid var(--line); border-radius: 10px;
+      padding: 7px 14px; color: var(--ink-2);
+      transition: border-color .15s, color .15s;
+    }
+    .nav-gh:hover { border-color: #c9cbd6; color: var(--ink); }
+
+    /* ===== Hero ===== */
+    .hero { position: relative; padding: 100px 0 72px; text-align: center; overflow: hidden; }
+    .hero::before {
+      content: "";
+      position: absolute; inset: 0; z-index: -1;
+      background:
+        radial-gradient(700px 380px at 50% -80px, rgba(109, 92, 255, 0.08), transparent 70%),
+        radial-gradient(500px 300px at 82% 12%, rgba(18, 168, 224, 0.07), transparent 70%);
+    }
+    .hero::after {
+      content: "";
+      position: absolute; inset: 0; z-index: -2;
+      background-image:
+        linear-gradient(to right, rgba(15, 18, 34, 0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15, 18, 34, 0.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+      -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 30%, #000 35%, transparent 75%);
+      mask-image: radial-gradient(ellipse 75% 65% at 50% 30%, #000 35%, transparent 75%);
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12.5px; font-weight: 600; color: var(--ink-2);
+      border: 1px solid var(--line); background: #fff;
+      border-radius: 999px; padding: 5px 14px;
+      box-shadow: 0 1px 2px rgba(15, 18, 34, 0.04);
+      margin-bottom: 28px;
+    }
+    .badge i { width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block; }
+    .hero h1 {
+      font-size: clamp(29px, 8vw, 62px);
+      line-height: 1.2;
+      font-weight: 850;
+      letter-spacing: -0.015em;
+      font-feature-settings: "palt";
+    }
+    .hero h1 .grad {
+      background: var(--accent-grad);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .hero-name { margin-top: 20px; font-size: 15px; color: var(--ink-2); letter-spacing: 0.02em; }
+    .hero-name b { font-weight: 800; color: var(--ink); letter-spacing: 0.01em; }
+    .hero .sub { max-width: 600px; margin: 14px auto 0; color: var(--ink-2); font-size: 16.5px; }
+    .hero-cta { margin-top: 38px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 13px 30px; border-radius: 12px;
+      font-weight: 700; font-size: 15px;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .btn-dark { color: #fff; background: var(--ink); box-shadow: 0 10px 26px rgba(15, 18, 34, 0.22); }
+    .btn-dark:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(15, 18, 34, 0.28); }
+    .btn-line { color: var(--ink); border: 1px solid var(--line); background: #fff; }
+    .btn-line:hover { border-color: #c9cbd6; }
+    .hero-meta { margin-top: 18px; font-size: 13px; color: var(--ink-3); }
+
+    /* ===== App mock (実アプリのダークUI・サンプルデータ) ===== */
+    .mock-wrap { padding: 34px 0 10px; }
+    .mock-frame { max-width: 980px; margin: 0 auto; border-radius: 18px; padding: 10px; background: linear-gradient(160deg, #eef0f6, #fafbfd); border: 1px solid var(--line); }
+    .app-mock, .mini { color-scheme: dark; font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; line-height: 1.55; text-align: left; color: var(--m-text); }
+    .app-mock {
+      display: grid; grid-template-columns: 200px minmax(0, 1fr);
+      border-radius: 11px; background: var(--m-bg);
+      box-shadow: 0 24px 70px rgba(15,18,34,.18); overflow: hidden; font-size: 11px; border: 1px solid #23263a;
+    }
+    .am-side { background: var(--m-side); border-right: 1px solid var(--m-border); padding: 12px 10px; }
+    .am-lights { display: flex; gap: 6px; padding: 0 4px 12px; }
+    .am-lights i { width: 9px; height: 9px; border-radius: 50%; }
+    .am-brand { display: flex; align-items: center; gap: 8px; padding: 0 4px 12px; font-weight: 800; font-size: 13px; }
+    .am-brand svg { width: 22px; height: 22px; }
+    .am-search { display: flex; align-items: center; gap: 6px; padding: 6px 8px; margin-bottom: 10px; background: var(--m-input); border: 1px solid var(--m-border-s); border-radius: 8px; color: var(--m-faint); font-size: 10px; }
+    .am-search svg { width: 12px; height: 12px; }
+    .kbd { margin-left: auto; font-family: "SF Mono", Menlo, monospace; font-size: 9px; color: var(--m-dim); border: 1px solid var(--m-border-s); border-radius: 4px; padding: 0 4px; }
+    .am-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 7px; color: var(--m-dim); font-size: 10.5px; white-space: nowrap; }
+    .am-item svg { width: 13px; height: 13px; flex-shrink: 0; color: rgb(var(--h)); }
+    .am-item small { margin-left: auto; color: var(--m-faint); font-size: 9px; }
+    .am-item.on { background: rgba(255,255,255,.06); color: var(--m-text); box-shadow: inset 2px 0 var(--m-accent); }
+    .am-cat { padding: 10px 8px 4px; color: var(--m-faint); font-size: 9px; font-weight: 700; }
+    .am-main { min-width: 0; display: flex; flex-direction: column; }
+    .am-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--m-border); }
+    .am-ticon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: rgb(var(--h)); background: rgb(var(--h) / .12); border: 1px solid rgb(var(--h) / .3); }
+    .am-ticon svg { width: 15px; height: 15px; }
+    .am-head small { display: block; color: var(--m-faint); font-size: 9px; }
+    .am-head b { font-size: 13px; }
+    .am-star { width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid var(--m-border-s); border-radius: 7px; color: var(--m-dim); font-size: 11px; }
+    .am-body { padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; }
+    .mopt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 10px; background: var(--m-elev); border: 1px solid var(--m-border); border-radius: 9px; font-size: 10px; color: var(--m-dim); }
+    .mopt b { font-weight: 700; color: var(--m-dim); }
+    .mseg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--m-border); background: var(--m-input); border-radius: 7px; }
+    .mseg span { padding: 2px 7px; border-radius: 5px; color: var(--m-dim); white-space: nowrap; }
+    .mseg .on { background: rgba(255,255,255,.1); color: var(--m-text); }
+    .mswitch { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .mswitch .tr { width: 24px; height: 14px; flex-shrink: 0; border-radius: 999px; background: var(--m-accent); position: relative; }
+    .mswitch .tr::after { content: ""; position: absolute; right: 2px; top: 2px; width: 10px; height: 10px; border-radius: 50%; background: #fff; }
+    .mswitch.off .tr { background: rgba(255,255,255,.18); }
+    .mswitch.off .tr::after { right: auto; left: 2px; }
+    .minput { display: inline-block; padding: 4px 8px; min-width: 120px; background: var(--m-input); border: 1px solid var(--m-border-s); border-radius: 6px; color: var(--m-text); font-family: "SF Mono", Menlo, monospace; }
+    .mpanes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-height: 0; flex: 1; }
+    .mpane { display: flex; flex-direction: column; min-width: 0; background: var(--m-elev); border: 1px solid var(--m-border); border-radius: 9px; overflow: hidden; }
+    .mpane-h { padding: 7px 10px; border-bottom: 1px solid var(--m-border); font-size: 10px; font-weight: 700; color: var(--m-dim); }
+    .mcode { flex: 1; padding: 8px 10px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 10px; line-height: 1.7; white-space: pre; overflow-x: auto; color: var(--m-text); }
+    .mcode.wrap { white-space: pre-wrap; word-break: break-all; }
+    .mcode .k { color: #7dd3fc; } .mcode .s { color: #86efac; } .mcode .n { color: #fcd34d; } .mcode .a { color: #f9a8d4; } .mcode .p { color: #8e98ad; }
+    .mfoot { padding: 6px 10px; border-top: 1px solid var(--m-border); font-size: 9.5px; color: var(--m-dim); }
+    .mfoot.ok { color: var(--m-success); }
+
+    /* ===== Feature mocks ===== */
+    .deep > *, .deep-visual { min-width: 0; }
+    .mini-frame { border-radius: 14px; padding: 8px; background: linear-gradient(160deg, #eef0f6, #fafbfd); border: 1px solid var(--line); }
+    .mini { border-radius: 9px; background: var(--m-bg); border: 1px solid #23263a; box-shadow: 0 18px 44px rgba(15,18,34,.16); overflow: hidden; font-size: 10px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .mcard { background: var(--m-elev); border: 1px solid var(--m-border); border-radius: 9px; overflow: hidden; }
+    .mcard-h { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--m-border); font-size: 10px; font-weight: 700; }
+    .mcard-h .cnt { color: var(--m-dim); font-weight: 400; }
+    .mbtn { display: inline-flex; align-items: center; gap: 4px; font-size: 9.5px; font-weight: 600; border: 1px solid transparent; border-radius: 6px; padding: 3px 8px; white-space: nowrap; }
+    .mbtn.p { color: #fff; background: var(--m-accent); }
+    .mbtn.s { color: var(--m-dim); background: rgba(255,255,255,.04); border-color: var(--m-border-s); }
+    .msp { margin-left: auto; }
+    .mrow { display: grid; align-items: center; gap: 10px; padding: 7px 10px; border-bottom: 1px solid var(--m-border); color: var(--m-dim); }
+    .mrow:last-child { border-bottom: none; }
+    .mrow.head { font-size: 9px; font-weight: 700; color: var(--m-faint); }
+    .mrow b { color: var(--m-text); font-weight: 700; }
+    .mrow .sub { display: block; font-size: 9px; color: var(--m-faint); }
+    .mrow .m { font-family: "SF Mono", Menlo, monospace; }
+    .mtag { display: inline-flex; align-items: center; height: 16px; padding: 0 6px; border-radius: 999px; font-size: 8.5px; font-weight: 700; color: var(--m-dim); background: rgba(255,255,255,.06); white-space: nowrap; }
+    .mtag.ok { color: var(--m-success); background: rgba(52,211,153,.12); }
+    .mtag.ac { color: var(--m-accent-t); background: rgba(124,108,255,.15); }
+    .mradio { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--m-border-s); }
+    .mradio.on { border: 3.5px solid var(--m-accent); }
+    .mkv { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--m-border); }
+    .mkv:last-child { border-bottom: none; }
+    .mkv span { font-size: 9.5px; font-weight: 700; color: var(--m-dim); }
+    .mkv small { display: block; font-size: 8.5px; font-weight: 500; color: var(--m-faint); }
+    .mkv div { font-size: 10.5px; }
+    .mpw { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--m-border); font-family: "SF Mono", Menlo, monospace; font-size: 11px; letter-spacing: .02em; }
+    .mpw:last-child { border-bottom: none; }
+    .mchips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .mchip { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; font-family: "SF Mono", Menlo, monospace; font-size: 9.5px; color: var(--m-faint); border: 1px solid var(--m-border); }
+    .mchip.on { color: var(--m-text); background: rgba(124,108,255,.2); border-color: rgba(124,108,255,.5); }
+    .mcond { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 8px 10px; border-bottom: 1px solid var(--m-border); color: var(--m-dim); }
+    .mcond:last-child { border-bottom: none; }
+    .now td { background: rgba(124,108,255,.14); }
+    .mtable { width: 100%; border-collapse: collapse; font-size: 10px; }
+    .mtable th { text-align: left; font-size: 9px; font-weight: 700; color: var(--m-faint); padding: 6px 10px; border-bottom: 1px solid var(--m-border); }
+    .mtable td { padding: 6px 10px; border-bottom: 1px solid var(--m-border); color: var(--m-text); white-space: nowrap; }
+    .mtable tr:last-child td { border-bottom: none; }
+    .mtable .f { color: var(--m-faint); margin-left: 6px; font-size: 9px; }
+    .mock-caption { margin-top: 10px; color: var(--ink-3); font-size: 11px; text-align: center; }
+
+    /* ===== Sections ===== */
+    section { padding: 92px 0; }
+    .sec-label {
+      display: block; text-align: center;
+      font-size: 13px; font-weight: 700; letter-spacing: 0.14em;
+      background: var(--accent-grad);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      margin-bottom: 12px;
+    }
+    .sec-title { text-align: center; font-size: clamp(26px, 4vw, 36px); font-weight: 800; letter-spacing: -0.01em; font-feature-settings: "palt"; }
+    .sec-sub { text-align: center; color: var(--ink-2); margin-top: 12px; font-size: 15px; }
+
+    /* ===== Why ===== */
+    .why { background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .why-lead { max-width: 680px; margin: 20px auto 0; text-align: center; color: var(--ink-2); font-size: 15px; }
+    .why-grid { margin-top: 48px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .why-card { position: relative; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 30px 26px; overflow: hidden; }
+    .why-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent-grad); }
+    .why-card .no {
+      font-family: "SF Mono", Menlo, monospace; font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+      background: var(--accent-grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .why-card h3 { font-size: 17px; margin: 8px 0 8px; font-weight: 800; }
+    .why-card p { font-size: 13.8px; color: var(--ink-2); }
+
+    /* ===== Steps ===== */
+    .steps { margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .step { position: relative; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 28px 26px; }
+    .step .num {
+      font-family: "SF Mono", Menlo, monospace; font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+      background: var(--accent-grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .step h3 { font-size: 16.5px; margin: 8px 0 6px; }
+    .step p { font-size: 13.8px; color: var(--ink-2); }
+    .step kbd { font-family: "SF Mono", Menlo, monospace; font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; background: var(--bg-soft); }
+
+    /* ===== Tools ===== */
+    .tool-cat { margin-top: 44px; }
+    .tool-cat:first-of-type { margin-top: 52px; }
+    .tool-cat-h { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-size: 15px; font-weight: 800; }
+    .tool-cat-h::before { content: ""; width: 9px; height: 9px; border-radius: 3px; background: rgb(var(--h)); }
+    .tool-cat-h span { font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
+    .tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .tool { display: flex; gap: 14px; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 18px; transition: border-color .15s, box-shadow .15s; }
+    .tool:hover { border-color: #d5d7e1; box-shadow: 0 8px 24px rgba(15, 18, 34, 0.05); }
+    .tool .ic { flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: rgb(var(--h) / 1); background: rgb(var(--h) / .1); border: 1px solid rgb(var(--h) / .28); }
+    .tool .ic svg { width: 18px; height: 18px; filter: saturate(1.3) brightness(.8); }
+    .tool h3 { font-size: 14.5px; font-weight: 750; line-height: 1.5; }
+    .tool h3 small { display: block; font-size: 11px; font-weight: 600; color: var(--ink-3); letter-spacing: .01em; }
+    .tool p { margin-top: 5px; font-size: 12.8px; color: var(--ink-2); line-height: 1.7; }
+
+    /* ===== Deep dives ===== */
+    .deep { display: grid; grid-template-columns: 1fr 1fr; gap: 54px; align-items: center; margin-top: 72px; }
+    .deep:first-of-type { margin-top: 56px; }
+    .deep-label {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
+      background: var(--accent-grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .deep h3 { font-size: 24px; font-weight: 800; margin: 10px 0 14px; letter-spacing: -0.01em; }
+    .deep p { color: var(--ink-2); font-size: 14.5px; }
+    .deep ul { margin-top: 16px; list-style: none; }
+    .deep li { position: relative; padding-left: 24px; margin-bottom: 9px; font-size: 13.8px; color: var(--ink-2); }
+    .deep li::before {
+      content: ""; position: absolute; left: 2px; top: 7px; width: 12px; height: 6px;
+      border-left: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(-45deg);
+    }
+    .deep li b { color: var(--ink); font-weight: 700; }
+    .deep code { font-family: "SF Mono", Menlo, monospace; font-size: .92em; background: var(--bg-soft); border: 1px solid var(--line); border-radius: 5px; padding: 0 4px; }
+
+    /* ===== FAQ ===== */
+    .faq-list { max-width: 1000px; margin: 48px auto 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+    .faq-item { border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden; }
+    .faq-item summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 16px 20px; font-weight: 700; font-size: 14px; line-height: 1.6; }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after {
+      content: ""; margin-left: auto; flex-shrink: 0; width: 9px; height: 9px;
+      border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3);
+      transform: rotate(45deg); transition: transform .2s;
+    }
+    .faq-item[open] summary::after { transform: rotate(-135deg); }
+    .faq-item[open] { border-color: #c9cbd6; }
+    .faq-item .a { padding: 0 20px 18px; color: var(--ink-2); font-size: 13.5px; }
+    .faq-item .a a { color: var(--accent); font-weight: 600; }
+    .faq-item code { font-family: "SF Mono", Menlo, monospace; font-size: .92em; }
+
+    /* ===== Download ===== */
+    .dl { background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .dl-cards { margin: 48px auto 0; max-width: 660px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .dl-card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 32px 26px; text-align: center; transition: transform .15s ease, box-shadow .15s ease; }
+    .dl-card:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(15, 18, 34, 0.08); }
+    .dl-card .os-ic { color: var(--ink); margin-bottom: 12px; }
+    .dl-card .os-ic svg { width: 30px; height: 30px; }
+    .dl-card h3 { font-size: 17px; }
+    .dl-card .fmt { color: var(--ink-3); font-size: 13px; margin: 4px 0 20px; }
+    .dl-card .btn { width: 100%; padding: 11px 0; font-size: 14px; }
+    .dl-card .btn + .fmt { margin: 14px 0 0; }
+    .dl-note { text-align: center; color: var(--ink-3); font-size: 13px; margin-top: 30px; }
+
+    footer { padding: 40px 0; }
+    .foot-inner { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-3); }
+    .foot-inner svg { width: 20px; height: 20px; }
+    .foot-right { margin-left: auto; }
+    .foot-right a:hover { color: var(--ink); }
+
+    @media (max-width: 900px) {
+      .container { padding: 0 20px; }
+      .tools { grid-template-columns: 1fr 1fr; }
+      .dl-cards { grid-template-columns: 1fr; max-width: 420px; }
+      .steps, .why-grid { grid-template-columns: 1fr; }
+      .deep { grid-template-columns: 1fr; gap: 26px; }
+      .deep .deep-visual { order: 1; }
+      .nav-links { display: none; }
+      .nav-gh { margin-left: auto; }
+      .faq-list { grid-template-columns: 1fr; }
+      .app-mock { grid-template-columns: 1fr; }
+      .am-side { display: none; }
+      .hero { padding: 72px 0 52px; }
+      section { padding: 64px 0; }
+      .foot-inner { flex-wrap: wrap; row-gap: 8px; }
+      .foot-right { margin-left: 0; width: 100%; }
+    }
+    @media (max-width: 640px) {
+      .tools { grid-template-columns: 1fr; }
+      .mpanes { grid-template-columns: 1fr; }
+      .mpanes .mpane:first-child { display: none; }
+      .mrow .hide-sm { display: none; }
+      .mtable .f { display: block; margin-left: 0; }
+      .ssh-grid { grid-template-columns: 1.1fr 1.2fr 1fr !important; }
+      .aws-grid { grid-template-columns: 14px 1fr 1.3fr !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="dk-g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#8b7bff"/><stop offset="0.55" stop-color="#5b7cfa"/><stop offset="1" stop-color="#2cc0f5"/>
+      </linearGradient>
+      <symbol id="deskit-mark" viewBox="0 0 64 64">
+        <rect width="64" height="64" rx="15" fill="url(#dk-g)"/>
+        <rect x="0.5" y="0.5" width="63" height="63" rx="14.5" fill="none" stroke="#fff" stroke-opacity="0.22"/>
+        <rect x="15" y="15" width="15" height="15" rx="4.2" fill="#fff"/>
+        <circle cx="41.5" cy="22.5" r="7.6" fill="#fff" fill-opacity="0.82"/>
+        <rect x="15" y="34" width="15" height="15" rx="4.2" fill="#fff" fill-opacity="0.62"/>
+        <path d="M41.5 34.2 L48.8 41.5 L41.5 48.8 L34.2 41.5 Z" fill="#fff" fill-opacity="0.9" stroke="#fff" stroke-opacity="0.9" stroke-width="2.4" stroke-linejoin="round"/>
+      </symbol>
+      <!-- ツールのアイコン (アプリと同じ lucide の形) -->
+      <symbol id="i-git" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9"/><path d="M12 12v3"/></symbol>
+      <symbol id="i-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01"/></symbol>
+      <symbol id="i-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></symbol>
+      <symbol id="i-swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+      <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></symbol>
+      <symbol id="i-binary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="14" width="4" height="6" rx="2"/><rect x="6" y="4" width="4" height="6" rx="2"/><path d="M6 20h4M14 10h4M6 14h2v6M14 4h2v6"/></symbol>
+      <symbol id="i-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".6" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".6" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".6" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.56-2.5 5.56-5.55C21.97 6.01 17.46 2 12 2z"/></symbol>
+      <symbol id="i-filecode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m10 13-2 2 2 2M14 17l2-2-2-2"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+      <symbol id="i-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+      <symbol id="i-braces" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></symbol>
+      <symbol id="i-db" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></symbol>
+      <symbol id="i-finger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .13-5.35 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></symbol>
+      <symbol id="i-hash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2.59 17.41A2 2 0 0 0 2 18.83V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.17a2 2 0 0 0 1.42-.59l.81-.81a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".6" fill="currentColor"/></symbol>
+      <symbol id="i-case" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 15 4-8 4 8"/><path d="M4 13h6"/><circle cx="18" cy="12" r="3"/><path d="M21 9v6"/></symbol>
+      <symbol id="i-lang" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></symbol>
+      <symbol id="i-pilcrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4v16"/><path d="M17 4v16"/><path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13"/></symbol>
+      <symbol id="i-regex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3v10"/><path d="m12.67 5.5 8.66 5"/><path d="m12.67 10.5 8.66-5"/><path d="M9 17a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2z"/></symbol>
+      <symbol id="i-compare" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    </defs>
+  </svg>
+
+  <nav>
+    <div class="container nav-inner">
+      <a class="nav-logo" href="#">
+        <svg viewBox="0 0 64 64"><use href="#deskit-mark"/></svg>
+        Deskit
+      </a>
+      <div class="nav-links">
+        <a href="#why">特長</a>
+        <a href="#tools">ツール一覧</a>
+        <a href="#deep">主要機能</a>
+        <a href="#faq">FAQ</a>
+        <a href="#download">ダウンロード</a>
+      </div>
+      <a class="nav-gh" href="https://github.com/zefact/deskit" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container">
+      <span class="badge"><i></i>正式版 公開中 · macOS / Windows · 22のツール · 無料</span>
+      <h1>開発の小さな道具を、<br /><span class="grad">ひとつのアプリに。</span></h1>
+      <p class="hero-name"><b>Deskit</b></p>
+      <p class="sub">
+        JSONの整形、Base64、JWT、ハッシュ、パスワード生成、和暦と年齢の計算。
+        ツールサイトを検索して探す代わりに、⌘K ですぐ呼び出せる道具をまとめました。
+        入力した内容はすべて手元で処理し、外部へ送りません。
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-dark" href="#download">無料でダウンロード</a>
+        <a class="btn btn-line" href="#tools">ツールを見る</a>
+      </div>
+      <div class="hero-meta">macOS (Apple Silicon) / Windows · 日本語UI · オープンソース (MIT License)</div>
+    </div>
+  </header>
+
+  <!-- 実アプリの画面をサンプルデータで再現したモック -->
+  <div class="mock-wrap container">
+    <div class="mock-frame">
+      <div class="app-mock" role="img" aria-label="DeskitのJSON整形の画面。左にカテゴリ別のツール一覧、右に入力したJSONと整形結果を並べて表示">
+        <div class="am-side">
+          <div class="am-lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+          <div class="am-brand"><svg viewBox="0 0 64 64"><use href="#deskit-mark"/></svg>Deskit</div>
+          <div class="am-search"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg>ツールを検索<span class="kbd">⌘K</span></div>
+          <div class="am-item" style="--h: 150 157 176"><svg viewBox="0 0 24 24"><use href="#i-grid"/></svg>すべてのツール<small>22</small></div>
+          <div class="am-cat">アカウント</div>
+          <div class="am-item" style="--h: var(--h-account)"><svg viewBox="0 0 24 24"><use href="#i-git"/></svg>Gitアカウント</div>
+          <div class="am-item" style="--h: var(--h-account)"><svg viewBox="0 0 24 24"><use href="#i-server"/></svg>SSH接続</div>
+          <div class="am-item" style="--h: var(--h-account)"><svg viewBox="0 0 24 24"><use href="#i-cloud"/></svg>AWSプロファイル</div>
+          <div class="am-cat">変換</div>
+          <div class="am-item" style="--h: var(--h-convert)"><svg viewBox="0 0 24 24"><use href="#i-swap"/></svg>JSON ⇔ YAML</div>
+          <div class="am-item" style="--h: var(--h-convert)"><svg viewBox="0 0 24 24"><use href="#i-clock"/></svg>日時 / Unix時間</div>
+          <div class="am-item" style="--h: var(--h-convert)"><svg viewBox="0 0 24 24"><use href="#i-cal"/></svg>西暦・和暦・年齢</div>
+          <div class="am-cat">エンコード / デコード</div>
+          <div class="am-item" style="--h: var(--h-encode)"><svg viewBox="0 0 24 24"><use href="#i-filecode"/></svg>Base64</div>
+          <div class="am-item" style="--h: var(--h-encode)"><svg viewBox="0 0 24 24"><use href="#i-shield"/></svg>JWTデコーダー</div>
+          <div class="am-cat">整形</div>
+          <div class="am-item on" style="--h: var(--h-format)"><svg viewBox="0 0 24 24"><use href="#i-braces"/></svg>JSON整形</div>
+          <div class="am-item" style="--h: var(--h-format)"><svg viewBox="0 0 24 24"><use href="#i-db"/></svg>SQL整形</div>
+        </div>
+        <div class="am-main">
+          <div class="am-head" style="--h: var(--h-format)">
+            <span class="am-ticon"><svg viewBox="0 0 24 24"><use href="#i-braces"/></svg></span>
+            <div><small>整形</small><b>JSON整形</b></div>
+            <span class="am-star">☆</span>
+          </div>
+          <div class="am-body">
+            <div class="mopt">
+              <b>インデント</b>
+              <span class="mseg"><span class="on">2スペース</span><span>4スペース</span><span>タブ</span><span>圧縮 (1行)</span></span>
+              <span class="mswitch off"><span class="tr"></span>キーを並べ替え</span>
+              <span class="mswitch off"><span class="tr"></span>非ASCIIを \u エスケープ</span>
+            </div>
+            <div class="mpanes">
+              <div class="mpane">
+                <div class="mpane-h">JSON</div>
+                <div class="mcode wrap">{"id":1024,"name":"Deskit","tags":["dev","tools"],"price":12345678901234567890,"owner":{"name":"ZEFACT","country":"JP"},"active":true,"note":null}</div>
+                <div class="mfoot ok">✓ 正しい JSON です</div>
+              </div>
+              <div class="mpane">
+                <div class="mpane-h">整形結果</div>
+<div class="mcode"><span class="p">{</span>
+  <span class="k">"id"</span><span class="p">:</span> <span class="n">1024</span><span class="p">,</span>
+  <span class="k">"name"</span><span class="p">:</span> <span class="s">"Deskit"</span><span class="p">,</span>
+  <span class="k">"tags"</span><span class="p">: [</span>
+    <span class="s">"dev"</span><span class="p">,</span>
+    <span class="s">"tools"</span>
+  <span class="p">],</span>
+  <span class="k">"price"</span><span class="p">:</span> <span class="n">12345678901234567890</span><span class="p">,</span>
+  <span class="k">"owner"</span><span class="p">: {</span>
+    <span class="k">"name"</span><span class="p">:</span> <span class="s">"ZEFACT"</span><span class="p">,</span>
+    <span class="k">"country"</span><span class="p">:</span> <span class="s">"JP"</span>
+  <span class="p">},</span>
+  <span class="k">"active"</span><span class="p">:</span> <span class="a">true</span><span class="p">,</span>
+  <span class="k">"note"</span><span class="p">:</span> <span class="a">null</span>
+<span class="p">}</span></div>
+                <div class="mfoot">15 行 · 203 B</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mock-caption">画面はサンプルデータによる再現です。</div>
+  </div>
+
+  <section id="why" class="why">
+    <div class="container">
+      <span class="sec-label">WHY DESKIT</span>
+      <h2 class="sec-title">ちょっとした変換のたびに、迷わない</h2>
+      <p class="why-lead">
+        JSONを整えたい、トークンの中身を見たい、パスワードを1つ作りたい。
+        そのたびにツールサイトを探していた手間を、アプリひとつにまとめました。
+      </p>
+      <div class="why-grid">
+        <div class="why-card">
+          <span class="no">01</span>
+          <h3>Webサイトに貼らなくていい</h3>
+          <p>JWTやアクセストークン、社内のJSONを、検索で見つけたサイトに貼り付けるのは不安なもの。Deskitは変換・整形・生成をすべてアプリの中で行い、入力した内容を外部へ送りません。インターネットにつながっていなくても使えます。</p>
+        </div>
+        <div class="why-card">
+          <span class="no">02</span>
+          <h3>探さず、すぐ呼び出せる</h3>
+          <p><span class="mono">⌘K</span> (Windows は <span class="mono">Ctrl+K</span>) でツールを検索。日本語名だけでなく、英語名やキーワード (md5・epoch・yml など) でも見つかります。よく使うものはお気に入りに。ほかのツールへ移っても、入力した内容は残ります。</p>
+        </div>
+        <div class="why-card">
+          <span class="no">03</span>
+          <h3>日本の開発現場に合わせて</h3>
+          <p>全角・半角やひらがな・カタカナの変換、Shift_JIS のバイト数と原稿用紙の枚数、和暦・年齢・学年の計算まで。画面はすべて日本語です。Git・SSH・AWS のアカウントの切り替えも、ここでまとめて行えます。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="workflow">
+    <div class="container">
+      <span class="sec-label">WORKFLOW</span>
+      <h2 class="sec-title">開いて、貼って、コピーするだけ</h2>
+      <p class="sec-sub">設定もアカウント登録もいりません。</p>
+      <div class="steps">
+        <div class="step">
+          <span class="num">STEP 01</span>
+          <h3>ツールを呼び出す</h3>
+          <p><kbd>⌘</kbd> <kbd>K</kbd> を押して、名前やキーワードを数文字。サイドバーのカテゴリやお気に入りからも開けます。</p>
+        </div>
+        <div class="step">
+          <span class="num">STEP 02</span>
+          <h3>入力する</h3>
+          <p>テキストを貼り付けると、その場で結果が出ます。ハッシュはファイルを選んでも求められます。</p>
+        </div>
+        <div class="step">
+          <span class="num">STEP 03</span>
+          <h3>コピーして使う</h3>
+          <p>結果の横のボタンでコピー。JSON の書き間違いは、どこが悪いかを行と列で示します。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tools" style="padding-top: 0;">
+    <div class="container">
+      <span class="sec-label">ALL TOOLS</span>
+      <h2 class="sec-title">22のツール</h2>
+      <p class="sec-sub">カテゴリごとに並んでいます。</p>
+      <div class="tool-cat" style="--h: var(--h-account)">
+        <div class="tool-cat-h">アカウント <span>3</span></div>
+        <div class="tools">
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-git"/></svg></div><div><h3>Gitアカウント<small>Git Accounts</small></h3><p>コミットの作者 (名前・メール) と接続に使う SSH 鍵を、アカウントとして組にして切り替えます</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-server"/></svg></div><div><h3>SSH接続<small>SSH Hosts</small></h3><p>~/.ssh/config の接続先 (Host) の別名・ユーザー・鍵を、追加・編集・削除します</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-cloud"/></svg></div><div><h3>AWSプロファイル<small>AWS Profiles</small></h3><p>AWS CLI のプロファイルを確認・追加・編集し、ターミナルで使うプロファイルを切り替えます</p></div></div>
+        </div>
+      </div>
+      <div class="tool-cat" style="--h: var(--h-convert)">
+        <div class="tool-cat-h">変換 <span>5</span></div>
+        <div class="tools">
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-swap"/></svg></div><div><h3>JSON ⇔ YAML<small>JSON / YAML Converter</small></h3><p>JSON と YAML を相互に変換します</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-clock"/></svg></div><div><h3>日時 / Unix時間<small>Unix Timestamp</small></h3><p>Unix時間と日時を相互に変換します。タイムゾーン・和暦にも対応</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-cal"/></svg></div><div><h3>西暦・和暦・年齢<small>Japanese Era &amp; Age</small></h3><p>生年月日や年から、和暦・年齢・干支と、小学校から大学までの入学・卒業の年を出します</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-binary"/></svg></div><div><h3>基数変換<small>Number Base Converter</small></h3><p>2進数・8進数・10進数・16進数を相互に変換します</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-palette"/></svg></div><div><h3>カラー変換<small>Color Converter</small></h3><p>HEX・RGB・HSL・OKLCH などの色の表記を相互に変換します</p></div></div>
+        </div>
+      </div>
+      <div class="tool-cat" style="--h: var(--h-encode)">
+        <div class="tool-cat-h">エンコード / デコード <span>4</span></div>
+        <div class="tools">
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-filecode"/></svg></div><div><h3>Base64<small>Base64 Encoder / Decoder</small></h3><p>テキストを Base64 にエンコード・デコードします</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-link"/></svg></div><div><h3>URLエンコード<small>URL Encoder / Decoder</small></h3><p>URL のパーセントエンコード・デコードと、URL の分解をします</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-code"/></svg></div><div><h3>HTMLエンティティ<small>HTML Entity Encoder / Decoder</small></h3><p>HTML の特殊文字を文字参照にエスケープ・元に戻します</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-shield"/></svg></div><div><h3>JWTデコーダー<small>JWT Decoder</small></h3><p>JSON Web Token のヘッダー・ペイロード・有効期限を確認します</p></div></div>
+        </div>
+      </div>
+      <div class="tool-cat" style="--h: var(--h-format)">
+        <div class="tool-cat-h">整形 <span>2</span></div>
+        <div class="tools">
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-braces"/></svg></div><div><h3>JSON整形<small>JSON Formatter</small></h3><p>JSON をインデントして読みやすくしたり、1行に圧縮したりします</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-db"/></svg></div><div><h3>SQL整形<small>SQL Formatter</small></h3><p>SQL をインデントして読みやすく整えます</p></div></div>
+        </div>
+      </div>
+      <div class="tool-cat" style="--h: var(--h-generate)">
+        <div class="tool-cat-h">生成 <span>3</span></div>
+        <div class="tools">
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-finger"/></svg></div><div><h3>UUID生成<small>UUID Generator</small></h3><p>UUID (v4 / v7) をまとめて生成します</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-hash"/></svg></div><div><h3>ハッシュ生成<small>Hash / Checksum</small></h3><p>テキストやファイルの MD5・SHA-1・SHA-256 などを求めます</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-key"/></svg></div><div><h3>パスワード生成<small>Password Generator</small></h3><p>条件を指定して安全なランダムパスワードを作ります</p></div></div>
+        </div>
+      </div>
+      <div class="tool-cat" style="--h: var(--h-text)">
+        <div class="tool-cat-h">テキスト <span>5</span></div>
+        <div class="tools">
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-case"/></svg></div><div><h3>ケース変換<small>Case Converter</small></h3><p>camelCase・snake_case・kebab-case などに一括変換します</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-lang"/></svg></div><div><h3>全角 / 半角変換<small>Full-width / Half-width</small></h3><p>英数字・記号・カナの全角と半角、ひらがなとカタカナを変換します</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-pilcrow"/></svg></div><div><h3>文字数カウント<small>Text Counter</small></h3><p>文字数・バイト数・行数・原稿用紙の枚数などを数えます</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-regex"/></svg></div><div><h3>正規表現テスター<small>Regex Tester</small></h3><p>正規表現の一致箇所・グループ・置換結果をその場で確認します</p></div></div>
+          <div class="tool"><div class="ic"><svg viewBox="0 0 24 24"><use href="#i-compare"/></svg></div><div><h3>テキスト比較<small>Text Diff</small></h3><p>2つのテキストの違いを左右に並べて表示します</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="deep" style="padding-top: 0;">
+    <div class="container">
+      <span class="sec-label">HIGHLIGHTS</span>
+      <h2 class="sec-title">主要機能</h2>
+
+      <!-- 1. Gitアカウント -->
+      <div class="deep">
+        <div>
+          <span class="deep-label">GIT ACCOUNTS</span>
+          <h3>仕事用と個人用を、取り違えない</h3>
+          <p>「コミットの作者 (名前・メール)」と「接続のしかた (SSH の別名か HTTPS のユーザー名)」を、アカウントとして組で登録。リポジトリを選んで切り替えれば、作者とリモートURLがまとめて設定されます。</p>
+          <ul>
+            <li><b>リポジトリごとに切り替え</b> — 選んだリポジトリの <code>.git/config</code> に作者とリモートURLを書きます。一度設定すれば、切り替え忘れがありません。</li>
+            <li><b>食い違いを知らせる</b> — 作者は会社、接続は個人の鍵、のようなずれがあれば表示します。</li>
+            <li><b>接続確認</b> — その別名で、どのユーザーとして認証されるかを確かめられます。</li>
+            <li><b>ホスト鍵の照合</b> — 初めて接続するホストは、鍵の指紋を確かめて known_hosts に登録できます (GitHub・GitLab・Bitbucket は公式の指紋と照合)。</li>
+          </ul>
+        </div>
+        <div class="deep-visual">
+          <div class="mini-frame">
+            <div class="mini" role="img" aria-label="Gitアカウントの画面例。個人と会社の2つのアカウントと、リポジトリに会社のアカウントを設定した状態">
+              <div class="mcard">
+                <div class="mcard-h">アカウント <span class="cnt">2</span><span class="mbtn p msp">＋ アカウントを追加</span></div>
+                <div class="mrow" style="grid-template-columns: 1fr 1.4fr 1.1fr;">
+                                    <div><b>個人</b><span class="sub">Taro Yamada</span></div>
+                  <div class="m">taro.dev@example.net</div>
+                  <div><span class="mtag">SSH</span> <span class="m">github-private</span></div>
+                </div>
+                <div class="mrow" style="grid-template-columns: 1fr 1.4fr 1.1fr;">
+                  <div><b>会社</b><span class="sub">Taro Yamada</span></div>
+                  <div class="m">taro@example.com</div>
+                  <div><span class="mtag">SSH</span> <span class="m">github-work</span></div>
+                </div>
+              </div>
+              <div class="mcard">
+                <div class="mcard-h">リポジトリごとのアカウント設定<span class="mbtn s msp">フォルダを選択</span></div>
+                <div class="mkv"><span>リポジトリ</span><div class="m">~/git/sample-app</div></div>
+                <div class="mkv"><span>アカウント</span><div><b>会社</b></div></div>
+                <div class="mkv"><span>作者</span><div>Taro Yamada <span class="m">&lt;taro@example.com&gt;</span></div></div>
+                <div class="mkv"><span>リモートURL</span><div class="m">git@github-work:example/sample-app.git</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. SSH接続 -->
+      <div class="deep">
+        <div class="deep-visual">
+          <div class="mini-frame">
+            <div class="mini" role="img" aria-label="SSH接続の画面例。~/.ssh/config の接続先が、別名・接続先・鍵・使っているGitアカウントの表で並んでいる">
+              <div class="mcard">
+                <div class="mcard-h">接続先 <span class="cnt">3</span><span class="mbtn p msp">＋ 追加</span></div>
+                <div class="mrow head ssh-grid" style="grid-template-columns: 1.1fr 1.3fr 1.1fr .8fr;"><span>別名 (Host)</span><span>接続先</span><span>鍵</span><span class="hide-sm">Gitアカウント</span></div>
+                <div class="mrow ssh-grid" style="grid-template-columns: 1.1fr 1.3fr 1.1fr .8fr;">
+                  <div><b class="m">github-work</b><span class="sub">GitHub</span></div>
+                  <div class="m">git@github.com</div>
+                  <div><span class="m">id_ed25519_work</span><span class="sub">この鍵だけを使う</span></div>
+                  <div class="hide-sm"><span class="mtag ok">会社</span></div>
+                </div>
+                <div class="mrow ssh-grid" style="grid-template-columns: 1.1fr 1.3fr 1.1fr .8fr;">
+                  <div><b class="m">github-private</b><span class="sub">GitHub</span></div>
+                  <div class="m">git@github.com</div>
+                  <div><span class="m">id_ed25519_private</span><span class="sub">この鍵だけを使う</span></div>
+                  <div class="hide-sm"><span class="mtag ok">個人</span></div>
+                </div>
+                <div class="mrow ssh-grid" style="grid-template-columns: 1.1fr 1.3fr 1.1fr .8fr;">
+                  <div><b class="m">dev-server</b><span class="sub">サーバー</span></div>
+                  <div class="m">ec2-user@10.0.0.12</div>
+                  <div><span class="m">dev.pem</span></div>
+                  <div class="hide-sm">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <span class="deep-label">SSH HOSTS</span>
+          <h3>~/.ssh/config を、表で直す</h3>
+          <p>接続先 (Host) の別名・ホスト名・ユーザー・ポート・鍵を、一覧から追加・編集・削除できます。GitHub などへの別名も、サーバーへの接続も扱えます。</p>
+          <ul>
+            <li><b>鍵は選ぶだけ</b> — <code>~/.ssh</code> にある鍵 (公開鍵と組のもの) から選べます。ほかの場所の鍵は、ファイルを選ぶ画面から指定できます。</li>
+            <li><b>ほかの行はそのまま</b> — 書き換えるのは選んだ節の決まった行だけ。コメントや <code>Host *</code> の設定は残し、新しい接続先は <code>Host *</code> より前に入れます。</li>
+            <li><b>書き換える前にバックアップ</b> — 元のファイルをアプリのデータフォルダに控えます。</li>
+            <li><b>Gitアカウントとつながる</b> — その別名を使っているアカウントを表示し、消そうとすると知らせます。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 3. AWSプロファイル -->
+      <div class="deep">
+        <div>
+          <span class="deep-label">AWS PROFILES</span>
+          <h3>どのアカウントに向いているか、ひと目で</h3>
+          <p>AWS CLI のプロファイルを一覧にして、接続確認でアカウントIDやアカウント名、IAMユーザー・ロールを表示します。ターミナルで使うプロファイルも、ここから切り替えられます。</p>
+          <ul>
+            <li><b>接続確認</b> — アカウントID・アカウント名・別名・IAMユーザーやロールを表示。名前が読めないときは「権限なし」などの理由も出します。</li>
+            <li><b>追加・編集・削除</b> — <code>~/.aws/config</code> と <code>~/.aws/credentials</code> を、画面から直せます。</li>
+            <li><b>ターミナルの切り替え</b> — 選んだプロファイルを、新しく開いたターミナルの <code>AWS_PROFILE</code> に反映できます (<code>~/.zshrc</code> への連携は任意)。</li>
+            <li><b>シークレットは出さない</b> — シークレットアクセスキーとセッショントークンは画面に表示しません。</li>
+          </ul>
+        </div>
+        <div class="deep-visual">
+          <div class="mini-frame">
+            <div class="mini" role="img" aria-label="AWSプロファイルの画面例。3つのプロファイルが、リージョン・アカウント・IAMの情報つきで並び、defaultがターミナルで使うプロファイルに選ばれている">
+              <div class="mcard">
+                <div class="mcard-h">プロファイル <span class="cnt">3</span><span class="mbtn s msp">接続確認</span><span class="mbtn p">＋ 追加</span></div>
+                <div class="mrow head aws-grid" style="grid-template-columns: 14px .9fr 1.4fr 1.1fr;"><span></span><span>名前</span><span>アカウント</span><span class="hide-sm">IAM</span></div>
+                <div class="mrow aws-grid" style="grid-template-columns: 14px .9fr 1.4fr 1.1fr;">
+                  <span class="mradio on"></span>
+                  <div><b class="m">default</b><span class="sub">ap-northeast-1</span></div>
+                  <div><span class="m">123456789012</span><span class="sub">example-prod</span></div>
+                  <div class="hide-sm"><span class="mtag">ユーザー</span> deploy</div>
+                </div>
+                <div class="mrow aws-grid" style="grid-template-columns: 14px .9fr 1.4fr 1.1fr;">
+                  <span class="mradio"></span>
+                  <div><b class="m">dev</b><span class="sub">ap-northeast-1</span></div>
+                  <div><span class="m">210987654321</span><span class="sub">example-dev</span></div>
+                  <div class="hide-sm"><span class="mtag">ロール</span> Developer</div>
+                </div>
+                <div class="mrow aws-grid" style="grid-template-columns: 14px .9fr 1.4fr 1.1fr;">
+                  <span class="mradio"></span>
+                  <div><b class="m">sandbox</b><span class="sub">us-east-1</span></div>
+                  <div><span class="m">345678901234</span><span class="sub">権限なし</span></div>
+                  <div class="hide-sm"><span class="mtag">ロール</span> ReadOnly</div>
+                </div>
+              </div>
+              <div class="mcard">
+                <div class="mkv"><span>ターミナル</span><div>新しく開いたターミナルは <span class="m">AWS_PROFILE=default</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. 西暦・和暦・年齢 -->
+      <div class="deep">
+        <div class="deep-visual">
+          <div class="mini-frame">
+            <div class="mini" role="img" aria-label="西暦・和暦・年齢の画面例。H2.4.5 と入力すると、1990年4月5日・平成2年・庚午、満36歳、小学校から大学までの入学と卒業の年が表示される">
+              <div class="mopt"><b>生年月日・年・年齢</b><span class="minput">H2.4.5</span><b>基準日</b><span class="mseg"><span>今日</span><span class="on">日付を指定</span></span><span class="m" style="font-family: 'SF Mono', Menlo, monospace;">2026/11/19</span></div>
+              <div class="mcard">
+                <div class="mkv"><span>西暦</span><div>1990年4月5日 (木)</div></div>
+                <div class="mkv"><span>和暦</span><div>平成2年4月5日 <span class="f" style="color: var(--m-faint);">H2.4.5</span></div></div>
+                <div class="mkv"><span>干支</span><div>庚午 (かのえうま)・午年</div></div>
+                <div class="mkv"><span>満年齢<small>数え年 37歳</small></span><div><b>36歳</b> <span style="color: var(--m-dim);">— 次の誕生日まで あと137日</span></div></div>
+              </div>
+              <div class="mcard">
+                <div class="mcard-h">学校の入学・卒業 <span class="cnt">浪人・留年をしないとき</span></div>
+                <table class="mtable">
+                  <thead><tr><th>学校</th><th>入学</th><th>卒業</th></tr></thead>
+                  <tbody>
+                    <tr><td>小学校</td><td>1997年4月<span class="f">平成9年4月</span></td><td>2003年3月<span class="f">平成15年3月</span></td></tr>
+                    <tr><td>中学校</td><td>2003年4月<span class="f">平成15年4月</span></td><td>2006年3月<span class="f">平成18年3月</span></td></tr>
+                    <tr><td>高校</td><td>2006年4月<span class="f">平成18年4月</span></td><td>2009年3月<span class="f">平成21年3月</span></td></tr>
+                    <tr><td>大学 (4年制)</td><td>2009年4月<span class="f">平成21年4月</span></td><td>2013年3月<span class="f">平成25年3月</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <span class="deep-label">JAPANESE ERA &amp; AGE</span>
+          <h3>和暦も年齢も、入学の年も</h3>
+          <p>生年月日・年・年齢のどれを入れても、和暦・干支・年齢と、小学校から大学までの入学・卒業の年を出します。書類の生年月日の確認や、履歴書の学歴欄を書くときに。</p>
+          <ul>
+            <li><b>いろいろな書き方で入力</b> — <code>1990/4/5</code>・<code>平成2年4月5日</code>・<code>H2.4.5</code>・<code>S60</code>・<code>平成二年</code>・<code>36歳</code> のどれでも読めます。</li>
+            <li><b>早生まれも考えて計算</b> — 1月1日〜4月1日生まれは1年早く入学します。基準日の時点の学年も出します。</li>
+            <li><b>元号の切り替わりに注意</b> — 「平成31年5月1日」のような日付は、令和元年5月1日にあたることを知らせます。</li>
+            <li><b>年齢の早見表</b> — 120年分の西暦・和暦・干支と年齢を一覧にできます。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 5. パスワード生成 -->
+      <div class="deep">
+        <div>
+          <span class="deep-label">PASSWORD</span>
+          <h3>サービスの決まりに合わせたパスワードを</h3>
+          <p>「記号はこの8種類だけ」「先頭は英字」のような、サービスごとの決まりに合わせて作れます。条件は次に開いたときも残ります。</p>
+          <ul>
+            <li><b>使う記号を1つずつ選ぶ</b> — 「よく使われる8種」「26種」「すべて」からまとめて選ぶこともできます。</li>
+            <li><b>使う文字は必ず入る</b> — 小文字・大文字・数字・記号のうち、オンにしたものは必ず1文字以上入れます。</li>
+            <li><b>読み間違いを防ぐ</b> — 同じ文字を続けない、見間違えやすい英数字 (0 O o 1 l I) を除く、が選べます。</li>
+            <li><b>安全な乱数で作る</b> — 暗号に使える乱数 (crypto.getRandomValues) で作り、強さの目安も表示します。</li>
+          </ul>
+        </div>
+        <div class="deep-visual">
+          <div class="mini-frame">
+            <div class="mini" role="img" aria-label="パスワード生成の画面例。長さ20、記号は8種類、先頭は英字の条件で、3つのパスワードが作られている">
+              <div class="mopt"><b>長さ</b><span class="minput" style="min-width: 40px;">20</span><b>個数</b><span class="minput" style="min-width: 32px;">3</span></div>
+              <div class="mcard">
+                <div class="mcard-h">条件</div>
+                <div class="mcond">
+                  <span class="mswitch"><span class="tr"></span>小文字 a-z</span>
+                  <span class="mswitch"><span class="tr"></span>大文字 A-Z</span>
+                  <span class="mswitch"><span class="tr"></span>数字 0-9</span>
+                  <span class="mswitch"><span class="tr"></span>記号</span>
+                </div>
+                <div class="mcond">
+                  <div class="mchips"><span class="mchip on">!</span><span class="mchip">&quot;</span><span class="mchip on">#</span><span class="mchip on">$</span><span class="mchip on">%</span><span class="mchip on">&amp;</span><span class="mchip">'</span><span class="mchip">(</span><span class="mchip">)</span><span class="mchip on">*</span><span class="mchip">+</span><span class="mchip">,</span><span class="mchip">-</span><span class="mchip">.</span><span class="mchip">/</span><span class="mchip">:</span><span class="mchip">;</span><span class="mchip">&lt;</span><span class="mchip">=</span><span class="mchip">&gt;</span><span class="mchip">?</span><span class="mchip on">@</span><span class="mchip">[</span><span class="mchip">\</span><span class="mchip">]</span><span class="mchip on">^</span><span class="mchip">_</span><span class="mchip">`</span><span class="mchip">{</span><span class="mchip">|</span><span class="mchip">}</span><span class="mchip">~</span></div>
+                </div>
+                <div class="mcond">
+                  <span>先頭の文字 <span class="mseg"><span>指定なし</span><span class="on">英字</span><span>英字か数字</span></span></span>
+                  <span class="mswitch"><span class="tr"></span>同じ文字を続けない</span>
+                  <span class="mswitch"><span class="tr"></span>見間違えやすい英数字 (0 O o 1 l I)</span>
+                </div>
+              </div>
+              <div class="mcard">
+                <div class="mcard-h">パスワード <span class="mtag ok msp">とても強い</span></div>
+                <div class="mpw">Kq7#vRm2$xTe9@wLp4&amp;z</div>
+                <div class="mpw">Wd3%hNs8!cYb5^gFt6*a</div>
+                <div class="mpw">Jx9&amp;eHk4@uZr2#nVm7$q</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" style="padding-top: 0;">
+    <div class="container">
+      <span class="sec-label">FAQ</span>
+      <h2 class="sec-title">よくある質問</h2>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>無料で使えますか?</summary>
+          <div class="a">無料です。MIT License のオープンソースソフトウェアとして公開しており、商用でもお使いいただけます。</div>
+        </details>
+        <details class="faq-item">
+          <summary>対応OSは?</summary>
+          <div class="a">macOS (Apple Silicon) と Windows に対応しています。Tauri 製のデスクトップアプリなので、ブラウザは必要ありません。</div>
+        </details>
+        <details class="faq-item">
+          <summary>入力した内容が外部に送られることはありますか?</summary>
+          <div class="a">ありません。変換・整形・生成などのツールは、すべてアプリの中で処理します。外部と通信するのは、起動したときに新しいバージョンがあるかを GitHub に確かめるときと、アカウント系のツールで「接続確認」などを行ったときだけです。接続確認は、お使いの <code>git</code> / <code>ssh</code> / <code>aws</code> コマンドが GitHub や AWS などの接続先に直接つなぎます。</div>
+        </details>
+        <details class="faq-item">
+          <summary>設定ファイルを書き換えるのが心配です</summary>
+          <div class="a">ファイルを書き換えるのは、アカウント系の3つのツール (Gitアカウント・SSH接続・AWSプロファイル) で、保存などの操作をしたときだけです。書き換える前に、元のファイルをアプリのデータフォルダの <code>backups/</code> に控えます (種類ごとに新しい30件)。<code>~/.ssh/config</code> は選んだ節の決まった行だけを書き換え、ほかの行やコメントはそのまま残します。</div>
+        </details>
+        <details class="faq-item">
+          <summary>AWS のシークレットアクセスキーは表示されますか?</summary>
+          <div class="a">表示しません。シークレットアクセスキーとセッショントークンは画面に出さず、アクセスキーIDも一部を伏せて表示します。</div>
+        </details>
+        <details class="faq-item">
+          <summary>git・ssh・aws のコマンドは同梱されていますか?</summary>
+          <div class="a">同梱していません。アカウント系のツールは、お使いのパソコンに入っている <code>git</code> / <code>ssh</code> / <code>aws</code> コマンドを呼び出します。ほかのツールは、何も入れなくても使えます。</div>
+        </details>
+        <details class="faq-item">
+          <summary>新しいバージョンにするには?</summary>
+          <div class="a">新しいバージョンが公開されると、起動したときにアプリの右下に知らせが出ます。「更新して再起動」を押すと、ダウンロードから再起動まで自動で行います。設定 → アップデート の「確かめる」からも確かめられます。更新ファイルには署名が付いていて、アプリが確かめてから入れ替えます。</div>
+        </details>
+        <details class="faq-item">
+          <summary>ダークモードはありますか?</summary>
+          <div class="a">あります。設定 (<code>⌘,</code>) から、ライト・ダーク・システムに合わせる、を選べます。エディタの文字サイズも変えられます。</div>
+        </details>
+        <details class="faq-item">
+          <summary>英語UIはありますか?</summary>
+          <div class="a">Deskit は日本語のアプリで、英語UIは用意していません。ツールの検索は、英語名やキーワード (md5・epoch・yml など) でもできます。</div>
+        </details>
+        <details class="faq-item">
+          <summary>欲しいツールがあります</summary>
+          <div class="a"><a href="https://github.com/zefact/deskit/issues" target="_blank" rel="noopener">GitHub の Issues</a> でお知らせください。不具合の報告もこちらへお願いします。</div>
+        </details>
+        <details class="faq-item">
+          <summary>ハッシュは大きなファイルでも求められますか?</summary>
+          <div class="a">求められます。ファイルは少しずつ読みながら計算するので、大きなファイルでもメモリを使いすぎません。MD5・SHA-1・SHA-256・SHA-384・SHA-512 に対応し、期待する値と照合もできます。</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="download" class="dl">
+    <div class="container">
+      <span class="sec-label">DOWNLOAD</span>
+      <h2 class="sec-title">さっそく使ってみる</h2>
+      <p class="sec-sub">最新版は GitHub Releases から入手できます。</p>
+      <div class="dl-cards">
+        <div class="dl-card">
+          <div class="os-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg></div>
+          <h3>macOS</h3>
+          <div class="fmt">.dmg (Apple Silicon)</div>
+          <a class="btn btn-dark" href="https://github.com/zefact/deskit/releases/latest">ダウンロード</a>
+          <div class="fmt">Deskit_x.x.x_aarch64.dmg をダウンロードしてください。</div>
+        </div>
+        <div class="dl-card">
+          <div class="os-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5 10.5 4.4v7.1H3zm0 13 7.5 1.1v-7H3zm8.5 1.2L21 21V12.6h-9.5zm0-15.4v7.2H21V3z"/></svg></div>
+          <h3>Windows</h3>
+          <div class="fmt">インストーラ (.exe)</div>
+          <a class="btn btn-dark" href="https://github.com/zefact/deskit/releases/latest">ダウンロード</a>
+          <div class="fmt">Deskit_x.x.x_x64-setup.exe をダウンロードしてください。</div>
+        </div>
+      </div>
+      <p class="dl-note">
+        一度インストールすれば、新しいバージョンが公開されたときにアプリ内の知らせから更新できます (macOS / Windows)。<br />
+        macOS は dmg を開いて Deskit.app を「アプリケーション」へドラッグしてください。<br />
+        Windows で SmartScreen の画面 (WindowsによってPCは保護されました) が出たときは、「詳細情報」→「実行」を選んでください。
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container foot-inner">
+      <svg viewBox="0 0 64 64"><use href="#deskit-mark"/></svg>
+      <span>Deskit — 開発に使う小さな道具をひとまとめにしたデスクトップアプリ</span>
+      <span class="foot-right">
+        <a href="https://github.com/zefact/deskit/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+        &nbsp;·&nbsp; © <span id="copy-year">2026</span> <a href="https://zefact.co.jp" target="_blank" rel="noopener">Zefact</a>
+      </span>
+    </div>
+  </footer>
+
+  <script>
+    // フッターの年を常に現在の年で表示する
+    document.getElementById("copy-year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

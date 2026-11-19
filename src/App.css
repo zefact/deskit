@@ -1,0 +1,10 @@
+/* ============================================================
+   Deskit のスタイル。
+   ※ 後から読んだ方が勝つので、この並び順は変えないこと
+   ============================================================ */
+
+@import "./styles/theme.css";
+@import "./styles/shell.css";
+@import "./styles/ui.css";
+@import "./styles/tools.css";
+@import "./styles/accounts.css";

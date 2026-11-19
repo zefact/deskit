@@ -1,0 +1,67 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Deskit",
+  "version": "1.0.0",
+  "identifier": "jp.co.zefact.deskit",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1440",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Deskit",
+        "width": 1240,
+        "height": 820,
+        "minWidth": 900,
+        "minHeight": 600,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": { "x": 20, "y": 32 }
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none'",
+      "devCsp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ipc: http://ipc.localhost http://localhost:1440 ws://localhost:1440"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEYwMDZDQzY3MjgxMjZCRjEKUldUeGF4SW9aOHdHOEptTFh5MzhLMGZzL2hpSmFxN0ZTYXJ5cG8wWlVUakE3SGtPZnhFUkx6bS8K",
+      "endpoints": [
+        "https://github.com/zefact/deskit/releases/latest/download/latest.json"
+      ]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg", "msi", "nsis"],
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "ZEFACT Co., Ltd.",
+    "homepage": "https://zefact.github.io/deskit/",
+    "category": "DeveloperTool",
+    "shortDescription": "開発者向けツール集",
+    "longDescription": "JSON整形・Base64・ハッシュ・UUID・正規表現・テキスト比較など、開発に使う小さな道具をひとまとめにしたデスクトップアプリです。",
+    "license": "MIT",
+    "copyright": "© 2026 ZEFACT Co., Ltd.",
+    "windows": {
+      "nsis": {
+        "languages": ["Japanese", "English"],
+        "displayLanguageSelector": false
+      },
+      "wix": {
+        "language": "ja-JP"
+      }
+    }
+  }
+}

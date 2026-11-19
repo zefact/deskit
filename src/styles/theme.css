@@ -1,0 +1,220 @@
+/* ============================================================
+   色・文字・角丸・余白の決まりごと (ダークが既定、ライトは下で上書き)
+   ============================================================ */
+
+:root {
+  /*
+   * 等幅フォント。
+   * macOSは SF Mono / Menlo、Windowsは Cascadia Mono / Consolas を使う
+   */
+  --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, "Cascadia Mono", Consolas, monospace;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe UI Variable Text", "Segoe UI",
+    "Yu Gothic UI", "Meiryo UI", "Noto Sans JP", system-ui, sans-serif;
+
+  --bg: #0c0e13;
+  --bg-sidebar: #101218;
+  --bg-elev: #151820;
+  --bg-elev-2: #1b1f29;
+  --bg-input: #0f1116;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.13);
+  --text: #e7e9f0;
+  --text-dim: #969db0;
+  --text-faint: #5e6578;
+
+  --accent: #7c6cff;
+  --accent-2: #36b5f5;
+  --accent-text: #aca2ff;
+  --accent-soft: rgba(124, 108, 255, 0.15);
+  --accent-grad: linear-gradient(135deg, #8b7bff 0%, #5b7cfa 55%, #2cc0f5 100%);
+  --ring: 0 0 0 3px rgba(124, 108, 255, 0.32);
+
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.12);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.12);
+  --warn: #fbbf24;
+  --warn-soft: rgba(251, 191, 36, 0.12);
+  --fav: #fbbf24;
+
+  /* カテゴリの色 (RGBの3つの値。rgb(var(--hue) / 0.2) のように透明度を付けて使う) */
+  --hue-account: 251 146 60;
+  --hue-convert: 96 165 250;
+  --hue-encode: 167 139 250;
+  --hue-format: 251 191 36;
+  --hue-generate: 52 211 153;
+  --hue-text: 244 114 182;
+
+  /* 重ねる色のもと (ダークは白、ライトは黒に近い色) */
+  --ink: 255, 255, 255;
+  --hover: rgba(var(--ink), 0.05);
+  --pressed: rgba(var(--ink), 0.08);
+  --shadow-lg: 0 24px 60px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --tip-bg: rgba(10, 12, 18, 0.95);
+
+  /* エディタ */
+  --editor-font-size: 13px;
+  --caret: #9a8cff;
+  --selection: rgba(124, 108, 255, 0.3);
+  --editor-active-line: rgba(255, 255, 255, 0.03);
+  --bracket-match: rgba(124, 108, 255, 0.28);
+  --syn-keyword: #c4b5fd;
+  --syn-string: #86efac;
+  --syn-number: #fcd34d;
+  --syn-atom: #f9a8d4;
+  --syn-property: #7dd3fc;
+  --syn-comment: #64748b;
+  --syn-type: #93c5fd;
+  --syn-func: #f0abfc;
+  --syn-punct: #8e98ad;
+  /* 正規表現の一致など (隣り合う一致を見分けるため2色を交互に使う) */
+  --mark-a: rgba(251, 191, 36, 0.26);
+  --mark-a-line: rgba(251, 191, 36, 0.85);
+  --mark-b: rgba(54, 181, 245, 0.24);
+  --mark-b-line: rgba(54, 181, 245, 0.85);
+
+  /* 角丸 */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+
+  color-scheme: dark;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  background-color: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html[data-theme="light"] {
+  --bg: #f6f7fb;
+  --bg-sidebar: #eef0f6;
+  --bg-elev: #ffffff;
+  --bg-elev-2: #f3f4f8;
+  --bg-input: #ffffff;
+  --border: rgba(17, 24, 39, 0.09);
+  --border-strong: rgba(17, 24, 39, 0.17);
+  --text: #1c2030;
+  --text-dim: #596075;
+  --text-faint: #9ba1b3;
+
+  --accent: #6656f0;
+  --accent-2: #0ea5e9;
+  --accent-text: #5847e6;
+  --accent-soft: rgba(102, 86, 240, 0.1);
+  --ring: 0 0 0 3px rgba(102, 86, 240, 0.22);
+
+  --success: #059669;
+  --success-soft: rgba(5, 150, 105, 0.1);
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.08);
+  --warn: #b45309;
+  --warn-soft: rgba(217, 119, 6, 0.1);
+  --fav: #f59e0b;
+
+  --hue-account: 234 88 12;
+  --hue-convert: 37 99 235;
+  --hue-encode: 124 58 237;
+  --hue-format: 217 119 6;
+  --hue-generate: 5 150 105;
+  --hue-text: 219 39 119;
+
+  --ink: 17, 24, 39;
+  --shadow-lg: 0 24px 60px -16px rgba(30, 35, 60, 0.28), 0 0 0 1px rgba(17, 24, 39, 0.08);
+  --tip-bg: rgba(28, 32, 48, 0.94);
+
+  --caret: #6656f0;
+  --selection: rgba(102, 86, 240, 0.18);
+  --editor-active-line: rgba(17, 24, 39, 0.03);
+  --bracket-match: rgba(102, 86, 240, 0.18);
+  --syn-keyword: #7c3aed;
+  --syn-string: #15803d;
+  --syn-number: #b45309;
+  --syn-atom: #be185d;
+  --syn-property: #0369a1;
+  --syn-comment: #94a3b8;
+  --syn-type: #1d4ed8;
+  --syn-func: #a21caf;
+  --syn-punct: #64748b;
+  --mark-a: rgba(245, 158, 11, 0.24);
+  --mark-a-line: rgba(217, 119, 6, 0.9);
+  --mark-b: rgba(14, 165, 233, 0.18);
+  --mark-b-line: rgba(2, 132, 199, 0.85);
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.faint {
+  color: var(--text-faint);
+}
+
+kbd {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--bg-elev);
+}
+
+/* スクロールバーを細く・目立たなく */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--ink), 0.1);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(var(--ink), 0.2);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::selection {
+  background: var(--selection);
+}
